@@ -76,22 +76,22 @@ services:
       - 'XDG_CONFIG_HOME=/caddy-storage/config'
       - 'SRC_FRONTEND_ADDRESSES=sourcegraph-frontend-0:3080'
       # Uncomment & update this line when using Let's Encrypt or custom HTTPS certificates:
-      # - 'SRC_SITE_ADDRESS=sourcegraph.example.com'
+      - 'SRC_SITE_ADDRESS=sgdemo.spicyinfra.com'
       #
       # Uncomment & update the following line when using HTTPS with Let's Encrypt
-      # - 'SRC_ACME_EMAIL=admin@example.com'
+      - 'SRC_ACME_EMAIL=kevin.wojkovich@sourcegraph.com'
     volumes:
       - 'caddy:/caddy-storage'
       #
       # Comment out the following line when using HTTPS with either Let's Encrypt or custom certificates
-      - '../caddy/builtins/http.Caddyfile:/etc/caddy/Caddyfile'
+      # - '../caddy/builtins/http.Caddyfile:/etc/caddy/Caddyfile'
       #
       # Uncomment the following line when using HTTPS with Let's Encrypt's staging environment
       # - '../caddy/builtins/https.lets-encrypt-staging.Caddyfile:/etc/caddy/Caddyfile'
       #
       # Uncomment the following line when using HTTPS with Let's Encrypt's production environment
       # IMPORTANT: Strongly recommended to test with the staging configuration above first, see that file for details.
-      # - '../caddy/builtins/https.lets-encrypt-prod.Caddyfile:/etc/caddy/Caddyfile'
+      - '../caddy/builtins/https.lets-encrypt-prod.Caddyfile:/etc/caddy/Caddyfile'
       #
       # Uncomment the following line when using HTTPS with custom certificates
       # - '../caddy/builtins/https.custom-cert.Caddyfile:/etc/caddy/Caddyfile'
@@ -129,7 +129,7 @@ services:
       - PGHOST=pgsql
       - CODEINTEL_PGHOST=codeintel-db
       - CODEINSIGHTS_PGDATASOURCE=postgres://postgres:password@codeinsights-db:5432/postgres
-      - 'SRC_GIT_SERVERS=gitserver-0:3178'
+      - 'SRC_GIT_SERVERS=gitserver-0:3178 gitserver-1:3178'
       - 'SRC_SYNTECT_SERVER=http://syntect-server:9238'
       - 'SEARCHER_URL=http://searcher-0:3181'
       - 'SYMBOLS_URL=http://symbols-0:3184'
@@ -171,7 +171,7 @@ services:
       - PGHOST=pgsql
       - CODEINTEL_PGHOST=codeintel-db
       - CODEINSIGHTS_PGDATASOURCE=postgres://postgres:password@codeinsights-db:5432/postgres
-      - 'SRC_GIT_SERVERS=gitserver-0:3178'
+      - 'SRC_GIT_SERVERS=gitserver-0:3178 gitserver-1:3178'
       - 'SRC_SYNTECT_SERVER=http://syntect-server:9238'
       - 'SEARCHER_URL=http://searcher-0:3181'
       - 'SYMBOLS_URL=http://symbols-0:3184'
@@ -210,7 +210,7 @@ services:
   gitserver-0:
     container_name: gitserver-0
     image: 'index.docker.io/sourcegraph/gitserver:3.38.1@sha256:f4afde31c06adf8f9b1e5b6dd1768934be5b5e71a2eff111d4e0955288ee1d85'
-    cpus: 4
+    cpus: 8
     mem_limit: '8g'
     environment:
       - 'SRC_FRONTEND_INTERNAL=sourcegraph-frontend-internal:3090'
@@ -221,6 +221,21 @@ services:
       - sourcegraph
     restart: always
     hostname: gitserver-0
+
+  gitserver-1:
+    container_name: gitserver-1
+    image: 'index.docker.io/sourcegraph/gitserver:3.38.1@sha256:f4afde31c06adf8f9b1e5b6dd1768934be5b5e71a2eff111d4e0955288ee1d85'
+    cpus: 8
+    mem_limit: '8g'
+    environment:
+      - 'SRC_FRONTEND_INTERNAL=sourcegraph-frontend-internal:3090'
+      - JAEGER_AGENT_HOST=jaeger
+    volumes:
+      - 'gitserver-1:/data/repos'
+    networks:
+      - sourcegraph
+    restart: always
+    hostname: gitserver-1
 
   # Description: Backend for indexed text search operations.
   #
@@ -373,7 +388,7 @@ services:
     environment:
       - 'SRC_FRONTEND_INTERNAL=sourcegraph-frontend-internal:3090'
       - JAEGER_AGENT_HOST=jaeger
-      - 'SRC_GIT_SERVERS=gitserver-0:3178'
+      - 'SRC_GIT_SERVERS=gitserver-0:3178 gitserver-01:3178'
       - 'SEARCHER_URL=http://searcher-0:3181'
       - 'SYMBOLS_URL=http://symbols-0:3184'
       - 'INDEXED_SEARCH_SERVERS=zoekt-webserver-0:6070'
@@ -711,6 +726,7 @@ services:
 volumes:
   caddy:
   gitserver-0:
+  gitserver-1:
   grafana:
   pgsql:
   codeintel-db:
